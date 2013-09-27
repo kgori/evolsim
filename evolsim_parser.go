@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"os"
 	"strings"
@@ -19,14 +20,22 @@ func (n *node) add_child(c *node) {
 }
 
 func (n *node) String() string {
+	return n.newick(true)
+}
+
+func (n *node) newick(inner bool) string {
 	if len(n.children) == 0 {
 		return n.name
 	}
 	subtrees := make([]string, len(n.children))
 	for i, c := range n.children {
-		subtrees[i] = fmt.Sprint(c)
+		subtrees[i] = c.newick(inner)
 	}
-	return "(" + strings.Join(subtrees, ",") + ")" + n.name
+	s := "(" + strings.Join(subtrees, ",") + ")"
+	if inner {
+		s += n.name
+	}
+	return s
 }
 
 func parse(filename string) (m map[string]*node) {
@@ -61,12 +70,23 @@ func parseLine(line string, m map[string]*node) {
 	}
 }
 
+func findRoot(n *node) *node {
+	for n.parent != nil {
+		n = n.parent
+	}
+	return n
+}
+
+var filename = flag.String("filename", "example.txt", "Tab-delimited lists of node names, one line per sheet")
+var inner = flag.Bool("inner", true, "Print inner node labels, TRUE or false")
+
 func main() {
-	m := parse("example.txt")
-	// l := "NGo1	ASk1	VBo1	ASk2"
-	// m := make(map[string]*node)
-	// parseLine(l, m)
-	fmt.Println(m)
-	n := m["NGo1"]
-	fmt.Println(n.children)
+	flag.Parse()
+	m := parse(*filename)
+	var root *node
+	for _, nd := range m {
+		root = findRoot(nd)
+		break
+	}
+	fmt.Println(root.newick(*inner))
 }
