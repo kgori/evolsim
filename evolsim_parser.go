@@ -77,8 +77,17 @@ func findRoot(n *node) *node {
 	return n
 }
 
+func unroot(n *node) *node {
+	c := n.children[0]
+	for _, s := range n.children[1:len(n.children)] {
+		c.add_child(s)
+	}
+	return c
+}
+
 var filename = flag.String("filename", "example.txt", "Tab-delimited lists of node names, one line per sheet")
 var inner = flag.Bool("inner", true, "Print inner node labels, TRUE or false")
+var unroot_tree = flag.Bool("unroot", false, "Unroot the tree, true or FALSE")
 
 func main() {
 	flag.Parse()
@@ -88,5 +97,8 @@ func main() {
 		root = findRoot(nd)
 		break
 	}
-	fmt.Println(root.newick(*inner))
+	if *unroot_tree {
+		root = unroot(root)
+	}
+	fmt.Println(root.newick(*inner) + ";")
 }
